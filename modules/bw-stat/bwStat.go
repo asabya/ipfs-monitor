@@ -103,9 +103,9 @@ func (w *BWStatBlock) getBitswapStat() string {
 	var buf bytes.Buffer
 
 	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
-	fmt.Fprintf(wrtr, "%12s: [green]%f\t[white]%12s: [green]%f\n",
+	fmt.Fprintf(wrtr, "%12s: [green]%.3f  [white]%12s: [green]%.3f\n",
 		"Rate In", bwStat.RateIn, "Rate Out", bwStat.RateOut)
-	fmt.Fprintf(wrtr, "%12s: [green]%d\t[white]%12s: [green]%d\n",
+	fmt.Fprintf(wrtr, "%12s: [green]%d  [white]%12s: [green]%d\n",
 		"Data Got", bwStat.TotalIn, "Data Sent", bwStat.TotalOut)
 	wrtr.Flush()
 	return buf.String()
