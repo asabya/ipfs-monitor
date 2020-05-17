@@ -16,7 +16,6 @@ type Widget struct {
 }
 
 func (w *Widget) Refresh()             {}
-func (w *Widget) Refreshing() bool     { return false }
 func (w *Widget) RefreshInterval() int { return w.Settings.Common.RefreshInterval }
 
 func (w *Widget) BorderColor() tcell.Color       { return w.View.GetBorderColor() }

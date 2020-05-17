@@ -26,6 +26,9 @@ const (
 
 func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	app *tview.Application) block.Block {
+	if !cfg.Monitor.Widgets[WidgetName].Enabled {
+		return nil
+	}
 	piWidget := PeerInfo{
 		Settings: config.Settings{
 			Common: &config.Common{
@@ -71,9 +74,7 @@ func (w *PeerInfo) Refresh() {
 		w.View.SetText(w.getPeerInfo())
 	})
 }
-func (w *PeerInfo) Refreshing() bool {
-	return false
-}
+
 func (w *PeerInfo) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }

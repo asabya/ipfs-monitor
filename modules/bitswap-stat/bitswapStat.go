@@ -26,6 +26,9 @@ const (
 
 func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	app *tview.Application) block.Block {
+	if !cfg.Monitor.Widgets[WidgetName].Enabled {
+		return nil
+	}
 	bsWidget := BitswapStatBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
@@ -64,9 +67,7 @@ func (w *BitswapStatBlock) Refresh() {
 		w.View.SetText(w.getBitswapStat())
 	})
 }
-func (w *BitswapStatBlock) Refreshing() bool {
-	return false
-}
+
 func (w *BitswapStatBlock) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }

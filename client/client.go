@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"go.uber.org/fx"
@@ -12,8 +13,16 @@ type HttpClient struct {
 	Base   string
 }
 
+// NewHttpClient creates an http client for
+// calling ipfs http api
+// reads os.Args[1] for ipfs "HOST:PORT"
+// Default is "localhost:5001"
 func NewHttpClient() fx.Option {
 	return fx.Provide(func() *HttpClient {
+		base := "localhost:5001"
+		if len(os.Args) > 1 {
+			base = os.Args[1]
+		}
 		return &HttpClient{
 			Client: &http.Client{
 				Transport:     nil,
@@ -21,7 +30,7 @@ func NewHttpClient() fx.Option {
 				Jar:           nil,
 				Timeout:       time.Second * 10,
 			},
-			Base: "http://localhost:5001/api/v0/",
+			Base: "http://" + base + "/api/v0/",
 		}
 	})
 }

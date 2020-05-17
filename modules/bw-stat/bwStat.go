@@ -30,6 +30,9 @@ var log = logging.Logger("modules/bwstat")
 
 func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	app *tview.Application) block.Block {
+	if !cfg.Monitor.Widgets[WidgetName].Enabled {
+		return nil
+	}
 	bwWidget := BWStatBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
@@ -68,9 +71,7 @@ func (w *BWStatBlock) Refresh() {
 		w.View.SetText(w.getBitswapStat())
 	})
 }
-func (w *BWStatBlock) Refreshing() bool {
-	return false
-}
+
 func (w *BWStatBlock) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }

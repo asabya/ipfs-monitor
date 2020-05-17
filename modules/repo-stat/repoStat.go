@@ -25,6 +25,9 @@ const (
 
 func NewWidget(cfg *config.Config, hc *client.HttpClient,
 	app *tview.Application) block.Block {
+	if !cfg.Monitor.Widgets[WidgetName].Enabled {
+		return nil
+	}
 	rsWidget := RepoStatBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
@@ -64,9 +67,7 @@ func (w *RepoStatBlock) Refresh() {
 		w.View.SetText(w.getRepoStat())
 	})
 }
-func (w *RepoStatBlock) Refreshing() bool {
-	return false
-}
+
 func (w *RepoStatBlock) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }

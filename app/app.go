@@ -26,11 +26,11 @@ type TerminalMonitor struct {
 	FocusTracker *FocusTracker
 }
 
-// Start fx app with TerminalMonitor
-func Start(ctx context.Context) (*TerminalMonitor, error) {
+// Bootstrap TerminalMonitor using fx
+func Bootstrap(ctx context.Context) (*TerminalMonitor, error) {
 	logging.SetLogLevel("*", "Debug")
-	monitor := &TerminalMonitor{}
 
+	monitor := &TerminalMonitor{}
 	app := fx.New(
 		fx.Provide(config.CreateOrLoadConfigFile),
 		client.NewHttpClient(),
@@ -50,10 +50,10 @@ func Start(ctx context.Context) (*TerminalMonitor, error) {
 		}),
 	)
 	monitor.App.SetInputCapture(monitor.keyboardIntercept)
+
 	if err := app.Start(ctx); err != nil {
 		return nil, err
 	}
-
 	return monitor, nil
 }
 
@@ -119,7 +119,7 @@ func (t *TerminalMonitor) scheduleWidgets() {
 	}
 }
 
-// Schedule queues data refreshes on a timer
+// Schedule queues widgets for data refresh on a timer
 func Schedule(widget block.Schedulable) {
 	if widget.RefreshInterval() <= 0 {
 		return

@@ -20,6 +20,5 @@ type Block interface {
 // a fixed time interval
 type Schedulable interface {
 	Refresh()
-	Refreshing() bool
 	RefreshInterval() int
 }

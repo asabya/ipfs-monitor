@@ -16,6 +16,7 @@ const (
 	ConfigFile = "config.yml"
 )
 
+// Common Module configs
 type Common struct {
 	PositionSettings
 	Bordered        bool
@@ -24,6 +25,7 @@ type Common struct {
 	Title           string
 }
 
+// PositionSettings places a module in a grid
 type PositionSettings struct {
 	Top    int `yaml:"top"`
 	Left   int `yaml:"left"`
@@ -31,11 +33,13 @@ type PositionSettings struct {
 	Width  int `yaml:"width"`
 }
 
+// Settings is module settings
 type Settings struct {
 	Common *Common
 	URL    string
 }
 
+// Config is monitor generated yml config
 type Config struct {
 	Monitor struct {
 		Colors struct {
@@ -58,11 +62,64 @@ type Config struct {
 	} `yaml:"monitor"`
 }
 
+// WidgetConfigs is config for each widgets
 type WidgetConfigs struct {
 	Enabled          bool             `yaml:"enabled"`
 	PositionSettings PositionSettings `yaml:"position"`
 	RefreshInterval  int              `yaml:"refreshInterval"`
 	Title            string           `yaml:"title"`
+}
+
+// CreateOrLoadConfigFile creates or loads config file
+// from config directory
+func CreateOrLoadConfigFile() *Config {
+	createConfigDir()
+	filePath, err := CreateFile(ConfigFile)
+	if err != nil {
+		fmt.Println("Unable to create config file", err.Error())
+		os.Exit(1)
+	}
+
+	// If the file is empty, write to it
+	file, _ := os.Stat(filePath)
+
+	if file.Size() == 0 {
+		if ioutil.WriteFile(filePath, []byte(defaultConfigFile), 0600) != nil {
+			fmt.Println("Unable to write to config file", err.Error())
+			os.Exit(1)
+		}
+	}
+
+	ymlCfg, err := parseYaml(filePath)
+	if err != nil {
+		fmt.Println("Unable to load config file", err.Error())
+		os.Exit(1)
+	}
+
+	return ymlCfg
+}
+
+// CreateFile creates config file
+func CreateFile(name string) (string, error) {
+	appDir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	confFile := filepath.Join(appDir, name)
+
+	_, err = os.Stat(confFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			_, err = os.Create(confFile)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			return "", err
+		}
+	}
+
+	return confFile, nil
 }
 
 func createConfigDir() {
@@ -100,57 +157,6 @@ func defaultDirPath() (string, error) {
 	}
 
 	return currentUser.HomeDir, nil
-}
-
-// CreateOrLoadConfigFile creates or loads config file
-// from config directory
-func CreateOrLoadConfigFile() *Config {
-	createConfigDir()
-	filePath, err := CreateFile(ConfigFile)
-	if err != nil {
-		fmt.Println("Unable to create config file", err.Error())
-		os.Exit(1)
-	}
-
-	// If the file is empty, write to it
-	file, _ := os.Stat(filePath)
-
-	if file.Size() == 0 {
-		if ioutil.WriteFile(filePath, []byte(defaultConfigFile), 0600) != nil {
-			fmt.Println("Unable to write to config file", err.Error())
-			os.Exit(1)
-		}
-	}
-
-	ymlCfg, err := parseYaml(filePath)
-	if err != nil {
-		fmt.Println("Unable to load config file", err.Error())
-		os.Exit(1)
-	}
-
-	return ymlCfg
-}
-
-func CreateFile(name string) (string, error) {
-	appDir, err := configDir()
-	if err != nil {
-		return "", err
-	}
-	confFile := filepath.Join(appDir, name)
-
-	_, err = os.Stat(confFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			_, err = os.Create(confFile)
-			if err != nil {
-				return "", err
-			}
-		} else {
-			return "", err
-		}
-	}
-
-	return confFile, nil
 }
 
 // parseYaml performs the real YAML parsing.

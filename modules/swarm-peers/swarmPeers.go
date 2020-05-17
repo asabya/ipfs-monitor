@@ -29,6 +29,9 @@ const (
 
 func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	app *tview.Application) block.Block {
+	if !cfg.Monitor.Widgets[WidgetName].Enabled {
+		return nil
+	}
 	spWidget := SwarmPeersBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
@@ -47,7 +50,7 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	text, count := spWidget.getSwarmPeers()
 
 	view := tview.NewTextView()
-	view.SetTitle(fmt.Sprintf("%s (%d)", cfg.Monitor.Widgets[WidgetName].Title, count))
+	view.SetTitle(fmt.Sprintf("%s ([green]%d[white])", cfg.Monitor.Widgets[WidgetName].Title, count))
 	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
 	view.SetBorder(true)
 	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
@@ -66,13 +69,11 @@ func (w *SwarmPeersBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
 		text, count := w.getSwarmPeers()
 		w.View.Clear()
-		w.View.SetTitle(fmt.Sprintf("%s (%d)", w.Config.Title, count))
+		w.View.SetTitle(fmt.Sprintf("%s ([green]%d[white])", w.Config.Title, count))
 		w.View.SetText(text)
 	})
 }
-func (w *SwarmPeersBlock) Refreshing() bool {
-	return false
-}
+
 func (w *SwarmPeersBlock) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }
