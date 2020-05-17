@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
@@ -9,6 +10,9 @@ import (
 type Widget struct {
 	View     *tview.TextView
 	Settings config.Settings
+	Client   *client.HttpClient
+	Config   config.WidgetConfigs
+	App      *tview.Application
 }
 
 func (w *Widget) Refresh()             {}

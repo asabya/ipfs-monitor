@@ -1,10 +1,12 @@
-package bootstrap_list
+package swarm_peers
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	logging "github.com/ipfs/go-log"
 
 	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/types"
@@ -16,16 +18,18 @@ import (
 	"github.com/rivo/tview"
 )
 
-type BootstrapBlock widget.Widget
+type SwarmPeersBlock widget.Widget
+
+var log = logging.Logger("modules/swarmpeers")
 
 const (
-	WidgetName = "bootstraplist"
-	URL        = "bootstrap/list"
+	WidgetName = "swarmpeers"
+	URL        = "swarm/peers"
 )
 
 func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	app *tview.Application) block.Block {
-	bbWidget := BootstrapBlock{
+	spWidget := SwarmPeersBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
 				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
@@ -40,7 +44,7 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 		Config: cfg.Monitor.Widgets[WidgetName],
 		App:    app,
 	}
-	text, count := bbWidget.getBootstrapList()
+	text, count := spWidget.getSwarmPeers()
 
 	view := tview.NewTextView()
 	view.SetTitle(fmt.Sprintf("%s (%d)", cfg.Monitor.Widgets[WidgetName].Title, count))
@@ -54,49 +58,50 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	view.SetScrollable(true)
 	view.SetText(text)
 
-	bbWidget.View = view
-	return &bbWidget
+	spWidget.View = view
+	return &spWidget
 }
 
-func (w *BootstrapBlock) Refresh() {
+func (w *SwarmPeersBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		text, count := w.getBootstrapList()
+		text, count := w.getSwarmPeers()
 		w.View.Clear()
 		w.View.SetTitle(fmt.Sprintf("%s (%d)", w.Config.Title, count))
 		w.View.SetText(text)
 	})
 }
-func (w *BootstrapBlock) Refreshing() bool {
+func (w *SwarmPeersBlock) Refreshing() bool {
 	return false
 }
-func (w *BootstrapBlock) RefreshInterval() int {
+func (w *SwarmPeersBlock) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }
 
-func (w *BootstrapBlock) BorderColor() tcell.Color       { return w.View.GetBorderColor() }
-func (w *BootstrapBlock) Name() string                   { return w.View.GetTitle() }
-func (w *BootstrapBlock) TextView() *tview.TextView      { return w.View }
-func (w *BootstrapBlock) CommonSettings() *config.Common { return w.Settings.Common }
-func (w *BootstrapBlock) Focusable() bool                { return true }
+func (w *SwarmPeersBlock) BorderColor() tcell.Color       { return w.View.GetBorderColor() }
+func (w *SwarmPeersBlock) Name() string                   { return w.View.GetTitle() }
+func (w *SwarmPeersBlock) TextView() *tview.TextView      { return w.View }
+func (w *SwarmPeersBlock) CommonSettings() *config.Common { return w.Settings.Common }
+func (w *SwarmPeersBlock) Focusable() bool                { return true }
 
-func (w *BootstrapBlock) getBootstrapList() (string, int) {
+func (w *SwarmPeersBlock) getSwarmPeers() (string, int) {
 	text := ""
-	req, err := http.NewRequest("GET", w.Client.Base+"bootstrap/list", nil)
+	req, err := http.NewRequest("GET", w.Client.Base+"swarm/peers", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
-		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
+		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s",
+			err.Error())
 		return text, 0
 	}
 	data, _ := ioutil.ReadAll(resp.Body)
-	var bootstraps types.BootstrapList
-	err = json.Unmarshal(data, &bootstraps)
+	var swarmPeers types.SwarmPeers
+	err = json.Unmarshal(data, &swarmPeers)
 	if err != nil {
 		fmt.Println(err.Error())
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
 		return text, 0
 	}
-	for _, v := range bootstraps.Peers {
-		text += fmt.Sprintf("%s\n", v)
+	for _, v := range swarmPeers.Peers {
+		text += fmt.Sprintf("%s/%s\n", v.Addr, v.Peer)
 	}
-	return text, len(bootstraps.Peers)
+	return text, len(swarmPeers.Peers)
 }

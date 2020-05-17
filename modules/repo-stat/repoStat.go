@@ -23,56 +23,64 @@ const (
 	URL        = "repo/stat"
 )
 
-func NewWidget(cfg *config.Config, hc *client.HttpClient) block.Block {
+func NewWidget(cfg *config.Config, hc *client.HttpClient,
+	app *tview.Application) block.Block {
 	rsWidget := RepoStatBlock{
 		Settings: config.Settings{
 			Common: &config.Common{
-				PositionSettings: cfg.Tapp.Widgets[WidgetName].PositionSettings,
+				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
 				Bordered:         false,
 				Enabled:          false,
-				RefreshInterval:  0,
-				Title:            cfg.Tapp.Widgets[WidgetName].Title,
+				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
+				Title:            cfg.Monitor.Widgets[WidgetName].Title,
 			},
 			URL: URL,
 		},
+		Client: hc,
+		Config: cfg.Monitor.Widgets[WidgetName],
+		App:    app,
 	}
 
 	view := tview.NewTextView()
-	view.SetTitle(cfg.Tapp.Widgets[WidgetName].Title)
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Tapp.Colors.Background])
+	view.SetTitle(cfg.Monitor.Widgets[WidgetName].Title)
+	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
 	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Tapp.Colors.Border.Normal])
+	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
 	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Tapp.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Tapp.Colors.Text])
+	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
+	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
 	view.SetWrap(false)
 	view.SetScrollable(true)
 
-	view.SetText(rsWidget.getRepoStat(hc))
+	view.SetText(rsWidget.getRepoStat())
 
 	rsWidget.View = view
 	return &rsWidget
 }
 
-func (rs *RepoStatBlock) Refresh() {
-	fmt.Println("Refreshing Repo stat")
+func (w *RepoStatBlock) Refresh() {
+	w.App.QueueUpdateDraw(func() {
+		w.View.Clear()
+		w.View.SetText(w.getRepoStat())
+	})
 }
-func (bb *RepoStatBlock) Refreshing() bool {
+func (w *RepoStatBlock) Refreshing() bool {
 	return false
 }
-func (bb *RepoStatBlock) RefreshInterval() int {
-	return 10
+func (w *RepoStatBlock) RefreshInterval() int {
+	return w.Settings.Common.RefreshInterval
 }
 
 func (w *RepoStatBlock) BorderColor() tcell.Color       { return w.View.GetBorderColor() }
 func (w *RepoStatBlock) Name() string                   { return w.View.GetTitle() }
 func (w *RepoStatBlock) TextView() *tview.TextView      { return w.View }
 func (w *RepoStatBlock) CommonSettings() *config.Common { return w.Settings.Common }
+func (w *RepoStatBlock) Focusable() bool                { return true }
 
-func (w *RepoStatBlock) getRepoStat(client *client.HttpClient) string {
+func (w *RepoStatBlock) getRepoStat() string {
 	text := ""
-	req, err := http.NewRequest("GET", client.Base+w.Settings.URL, nil)
-	resp, err := client.Client.Do(req)
+	req, err := http.NewRequest("GET", w.Client.Base+w.Settings.URL, nil)
+	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
 		return text

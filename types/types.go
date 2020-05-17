@@ -19,3 +19,36 @@ type RepoStat struct {
 type BootstrapList struct {
 	Peers []string `json:"Peers"`
 }
+
+type SwarmPeers struct {
+	Peers []struct {
+		Addr      string `json:"Addr"`
+		Direction int    `json:"Direction"`
+		Latency   string `json:"Latency"`
+		Muxer     string `json:"Muxer"`
+		Peer      string `json:"Peer"`
+		Streams   []struct {
+			Protocol string `json:"Protocol"`
+		} `json:"Streams"`
+	} `json:"Peers"`
+}
+
+type BitswapStat struct {
+	BlocksReceived   uint64        `json:"BlocksReceived"`
+	BlocksSent       uint64        `json:"BlocksSent"`
+	DataReceived     uint64        `json:"DataReceived"`
+	DataSent         uint64        `json:"DataSent"`
+	DupBlksReceived  uint64        `json:"DupBlksReceived"`
+	DupDataReceived  uint64        `json:"DupDataReceived"`
+	MessagesReceived uint64        `json:"MessagesReceived"`
+	Peers            []interface{} `json:"Peers"`
+	ProvideBufLen    int           `json:"ProvideBufLen"`
+	Wantlist         []interface{} `json:"Wantlist"`
+}
+
+type BWStat struct {
+	RateIn   float64 `json:"RateIn"`
+	RateOut  float64 `json:"RateOut"`
+	TotalIn  int64   `json:"TotalIn"`
+	TotalOut int64   `json:"TotalOut"`
+}

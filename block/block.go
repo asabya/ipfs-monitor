@@ -11,6 +11,7 @@ type Block interface {
 	BorderColor() tcell.Color
 	Name() string
 	TextView() *tview.TextView
+	Focusable() bool
 
 	CommonSettings() *config.Common
 }

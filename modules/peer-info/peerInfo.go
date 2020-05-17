@@ -24,32 +24,36 @@ const (
 	URL        = "id"
 )
 
-func NewWidget(cfg *config.Config, httpClient *client.HttpClient) block.Block {
+func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
+	app *tview.Application) block.Block {
 	piWidget := PeerInfo{
 		Settings: config.Settings{
 			Common: &config.Common{
-				PositionSettings: cfg.Tapp.Widgets[WidgetName].PositionSettings,
+				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
 				Bordered:         false,
 				Enabled:          false,
-				RefreshInterval:  0,
-				Title:            cfg.Tapp.Widgets[WidgetName].Title,
+				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
+				Title:            cfg.Monitor.Widgets[WidgetName].Title,
 			},
 			URL: URL,
 		},
+		Client: httpClient,
+		Config: cfg.Monitor.Widgets[WidgetName],
+		App:    app,
 	}
 
 	view := tview.NewTextView()
-	view.SetTitle(cfg.Tapp.Widgets[WidgetName].Title)
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Tapp.Colors.Background])
+	view.SetTitle(cfg.Monitor.Widgets[WidgetName].Title)
+	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
 	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Tapp.Colors.Border.Normal])
+	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
 	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Tapp.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Tapp.Colors.Text])
+	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
+	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
 	view.SetWrap(false)
 	view.SetScrollable(true)
 
-	view.SetText(piWidget.getPeerInfo(httpClient))
+	view.SetText(piWidget.getPeerInfo())
 
 	piWidget.View = view
 	return &piWidget
@@ -59,11 +63,24 @@ func (w *PeerInfo) BorderColor() tcell.Color       { return w.View.GetBorderColo
 func (w *PeerInfo) Name() string                   { return w.View.GetTitle() }
 func (w *PeerInfo) TextView() *tview.TextView      { return w.View }
 func (w *PeerInfo) CommonSettings() *config.Common { return w.Settings.Common }
+func (w *PeerInfo) Focusable() bool                { return true }
 
-func (w *PeerInfo) getPeerInfo(client *client.HttpClient) string {
+func (w *PeerInfo) Refresh() {
+	w.App.QueueUpdateDraw(func() {
+		w.View.Clear()
+		w.View.SetText(w.getPeerInfo())
+	})
+}
+func (w *PeerInfo) Refreshing() bool {
+	return false
+}
+func (w *PeerInfo) RefreshInterval() int {
+	return w.Settings.Common.RefreshInterval
+}
+func (w *PeerInfo) getPeerInfo() string {
 	text := ""
-	req, err := http.NewRequest("GET", client.Base+w.Settings.URL, nil)
-	resp, err := client.Client.Do(req)
+	req, err := http.NewRequest("GET", w.Client.Base+w.Settings.URL, nil)
+	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
 		return text

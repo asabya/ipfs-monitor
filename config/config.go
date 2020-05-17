@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DefaultDir = "tapp"
+	DefaultDir = "ipfs-monitor"
 	ConfigFile = "config.yml"
 )
 
@@ -37,7 +37,7 @@ type Settings struct {
 }
 
 type Config struct {
-	Tapp struct {
+	Monitor struct {
 		Colors struct {
 			Border struct {
 				Focusable string `yaml:"focusable"`
@@ -55,7 +55,7 @@ type Config struct {
 		} `yaml:"grid"`
 		RefreshInterval int                      `yaml:"refreshInterval"`
 		Widgets         map[string]WidgetConfigs `yaml:"widgets"`
-	} `yaml:"tapp"`
+	} `yaml:"monitor"`
 }
 
 type WidgetConfigs struct {

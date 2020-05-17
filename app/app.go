@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/Sab94/ipfs-monitor/modules"
 
@@ -10,21 +10,26 @@ import (
 	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
 	"github.com/gdamore/tcell"
+	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
 	"go.uber.org/fx"
 )
 
+var log = logging.Logger("subsystem name")
+
 // TerminalMonitor is the terminal app. It has all the modules
 // to be rendered. tview app and http.client to call ipfs apis
 type TerminalMonitor struct {
-	App        *tview.Application
-	HttpClient *client.HttpClient
-	Blocks     []block.Block
+	App          *tview.Application
+	HttpClient   *client.HttpClient
+	Blocks       []block.Block
+	FocusTracker *FocusTracker
 }
 
 // Start fx app with TerminalMonitor
 func Start(ctx context.Context) (*TerminalMonitor, error) {
-	tApp := &TerminalMonitor{}
+	logging.SetLogLevel("*", "Debug")
+	monitor := &TerminalMonitor{}
 
 	app := fx.New(
 		fx.Provide(config.CreateOrLoadConfigFile),
@@ -34,28 +39,30 @@ func Start(ctx context.Context) (*TerminalMonitor, error) {
 			NewTviewApp,
 			modules.BootstrapAllModules,
 		),
-		fx.Extract(tApp),
+		NewFocusTracker(),
+		fx.Extract(monitor),
 		fx.Invoke(func(grid *tview.Grid) {
-			for _, v := range tApp.Blocks {
+			for _, v := range monitor.Blocks {
 				grid.AddItem(v.TextView(), v.CommonSettings().Top, v.CommonSettings().Left,
 					v.CommonSettings().Height, v.CommonSettings().Width, 0, 0, false)
 			}
+			monitor.scheduleWidgets()
 		}),
 	)
-	tApp.App.SetInputCapture(tApp.keyboardIntercept)
+	monitor.App.SetInputCapture(monitor.keyboardIntercept)
 	if err := app.Start(ctx); err != nil {
 		return nil, err
 	}
 
-	return tApp, nil
+	return monitor, nil
 }
 
 // NewTviewGrid creates a tview.Grid
 func NewTviewGrid(cfg *config.Config) *tview.Grid {
 	grid := tview.NewGrid()
-	grid.SetBackgroundColor(tcell.ColorNames[cfg.Tapp.Grid.Background])
-	grid.SetColumns(cfg.Tapp.Grid.Columns...)
-	grid.SetRows(cfg.Tapp.Grid.Rows...)
+	grid.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Grid.Background])
+	grid.SetColumns(cfg.Monitor.Grid.Columns...)
+	grid.SetRows(cfg.Monitor.Grid.Rows...)
 	grid.SetBorder(false)
 
 	return grid
@@ -65,7 +72,7 @@ func NewTviewGrid(cfg *config.Config) *tview.Grid {
 func NewTviewApp(cfg *config.Config, grid *tview.Grid) *tview.Application {
 	pages := tview.NewPages()
 	pages.AddPage("grid", grid, true, true)
-	pages.Box.SetBackgroundColor(tcell.ColorNames[cfg.Tapp.Grid.Background])
+	pages.Box.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Grid.Background])
 
 	tviewApp := tview.NewApplication()
 	tviewApp.SetRoot(pages, true)
@@ -79,15 +86,54 @@ func (t *TerminalMonitor) keyboardIntercept(event *tcell.EventKey) *tcell.EventK
 	// These keys are global keys used by the app. Widgets should not implement these keys
 	switch event.Key() {
 	case tcell.KeyCtrlR:
-		fmt.Println("KeyCtrlR")
+		t.refreshAllWidgets()
 		return nil
 	case tcell.KeyTab:
-		fmt.Println("Tab")
+		t.FocusTracker.Next()
 	case tcell.KeyBacktab:
-		fmt.Println("Backtab")
+		t.FocusTracker.Prev()
 		return nil
 	case tcell.KeyEsc:
 		t.App.Stop()
 	}
 	return event
+}
+
+func (t *TerminalMonitor) refreshAllWidgets() {
+	for _, widget := range t.Blocks {
+		schedulable, ok := widget.(block.Schedulable)
+		if ok {
+			go schedulable.Refresh()
+		}
+	}
+}
+
+func (t *TerminalMonitor) scheduleWidgets() {
+	log.Debug("scheduleWidgets")
+	for _, widget := range t.Blocks {
+		schedulable, ok := widget.(block.Schedulable)
+		if ok {
+			log.Debug("scheduleWidgets : ", widget.Name(), ok)
+			go Schedule(schedulable)
+		}
+	}
+}
+
+// Schedule kicks off the first refresh of a module's data and then queues the rest of the
+// data refreshes on a timer
+func Schedule(widget block.Schedulable) {
+	if widget.RefreshInterval() <= 0 {
+		return
+	}
+	//widget.Refresh()
+	interval := time.Duration(widget.RefreshInterval()) * time.Second
+	log.Debug(interval)
+	timer := time.NewTicker(interval)
+
+	for {
+		select {
+		case <-timer.C:
+			widget.Refresh()
+		}
+	}
 }
