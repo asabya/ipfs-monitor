@@ -17,8 +17,8 @@ import (
 
 var log = logging.Logger("subsystem name")
 
-// TerminalMonitor is the terminal app. It has all the modules
-// to be rendered. tview app and http.client to call ipfs apis
+// TerminalMonitor is the terminal app for ipfs. For now
+// it has some of the ipfs apis implemented and rendered
 type TerminalMonitor struct {
 	App          *tview.Application
 	HttpClient   *client.HttpClient
@@ -119,15 +119,12 @@ func (t *TerminalMonitor) scheduleWidgets() {
 	}
 }
 
-// Schedule kicks off the first refresh of a module's data and then queues the rest of the
-// data refreshes on a timer
+// Schedule queues data refreshes on a timer
 func Schedule(widget block.Schedulable) {
 	if widget.RefreshInterval() <= 0 {
 		return
 	}
-	//widget.Refresh()
 	interval := time.Duration(widget.RefreshInterval()) * time.Second
-	log.Debug(interval)
 	timer := time.NewTicker(interval)
 
 	for {

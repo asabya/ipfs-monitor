@@ -101,12 +101,11 @@ func (w *BWStatBlock) getBitswapStat() string {
 	wrtr := new(tabwriter.Writer)
 	var buf bytes.Buffer
 
-	// minwidth, tabwidth, padding, padchar, flags
-	wrtr.Init(&buf, 6, 8, 10, '\t', 0)
-	fmt.Fprintf(wrtr, "Rate In : %f\t Rate Out : %f\n",
-		bwStat.RateIn, bwStat.RateOut)
-	fmt.Fprintf(wrtr, "Data Got : %d\t Data Sent : %d\n",
-		bwStat.TotalIn, bwStat.TotalOut)
+	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
+	fmt.Fprintf(wrtr, "%12s: [green]%f\t[white]%12s: [green]%f\n",
+		"Rate In", bwStat.RateIn, "Rate Out", bwStat.RateOut)
+	fmt.Fprintf(wrtr, "%12s: [green]%d\t[white]%12s: [green]%d\n",
+		"Data Got", bwStat.TotalIn, "Data Sent", bwStat.TotalOut)
 	wrtr.Flush()
 	return buf.String()
 }

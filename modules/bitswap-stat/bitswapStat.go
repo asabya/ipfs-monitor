@@ -97,13 +97,13 @@ func (w *BitswapStatBlock) getBitswapStat() string {
 	wrtr := new(tabwriter.Writer)
 	var buf bytes.Buffer
 
-	// minwidth, tabwidth, padding, padchar, flags
 	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
-	fmt.Fprintf(wrtr, "Blocks Got : %d\tBlocks Sent : %d\tDup Blocks : %d\n",
-		bitswapStat.BlocksReceived, bitswapStat.BlocksSent, bitswapStat.DupBlksReceived)
-	wrtr.Flush()
-	fmt.Fprintf(wrtr, "Data Got : %d\tData Sent : %d\tDup Data : %d\n",
-		bitswapStat.DataReceived, bitswapStat.DataSent, bitswapStat.DupDataReceived)
+	fmt.Fprintf(wrtr, "%12s: [green]%d\t[white]%12s: [green]%d\t[white]%12s: [green]%d\n",
+		"Blocks Got", bitswapStat.BlocksReceived, "Blocks Sent",
+		bitswapStat.BlocksSent, "Dup Blocks", bitswapStat.DupBlksReceived)
+	fmt.Fprintf(wrtr, "%12s: [green]%d\t[white]%12s: [green]%d\t[whitw]%12s: [green]%d\n",
+		"Data Got", bitswapStat.DataReceived, "Data Sent", bitswapStat.DataSent, "Dup Dats",
+		bitswapStat.DupDataReceived)
 	wrtr.Flush()
 
 	return buf.String()
