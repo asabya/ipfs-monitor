@@ -33,42 +33,17 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	if !cfg.Monitor.Widgets[WidgetName].Enabled {
 		return nil
 	}
-	bwWidget := BWStatBlock{
-		Settings: config.Settings{
-			Common: &config.Common{
-				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
-				Bordered:         false,
-				Enabled:          false,
-				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
-				Title:            cfg.Monitor.Widgets[WidgetName].Title,
-			},
-			URL: URL,
-		},
-		Client: httpClient,
-		Config: cfg.Monitor.Widgets[WidgetName],
-		App:    app,
-	}
 
-	view := tview.NewTextView()
-	view.SetTitle(cfg.Monitor.Widgets[WidgetName].Title)
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
-	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
-	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetWrap(false)
-	view.SetScrollable(true)
-	view.SetText(bwWidget.getBitswapStat())
+	w := widget.NewWidget(cfg, httpClient, app, WidgetName, URL)
+	bwWidget := BWStatBlock(w)
+	bwWidget.Render()
 
-	bwWidget.View = view
 	return &bwWidget
 }
 
 func (w *BWStatBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		w.View.Clear()
-		w.View.SetText(w.getBitswapStat())
+		w.Render()
 	})
 }
 
@@ -82,31 +57,33 @@ func (w *BWStatBlock) TextView() *tview.TextView      { return w.View }
 func (w *BWStatBlock) CommonSettings() *config.Common { return w.Settings.Common }
 func (w *BWStatBlock) Focusable() bool                { return true }
 
-func (w *BWStatBlock) getBitswapStat() string {
-	text := ""
+func (w *BWStatBlock) Render() {
+	wrtr := new(tabwriter.Writer)
+	var buf bytes.Buffer
+	var bwStat types.BWStat
+	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
+	data := []byte{}
 	req, err := http.NewRequest("GET", w.Client.Base+"stats/bw", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
-		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s",
+		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon, %s",
 			err.Error())
-		return text
+		goto set
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-	var bwStat types.BWStat
+	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &bwStat)
 	if err != nil {
-		fmt.Println(err.Error())
-		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text
+		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon")
+		goto set
 	}
-	wrtr := new(tabwriter.Writer)
-	var buf bytes.Buffer
 
-	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
 	fmt.Fprintf(wrtr, "%12s: [green]%.3f  [white]%12s: [green]%.3f\n",
 		"Rate In", bwStat.RateIn, "Rate Out", bwStat.RateOut)
 	fmt.Fprintf(wrtr, "%12s: [green]%d  [white]%12s: [green]%d\n",
 		"Data Got", bwStat.TotalIn, "Data Sent", bwStat.TotalOut)
+set:
 	wrtr.Flush()
-	return buf.String()
+	w.View.Clear()
+	w.View.SetTitle(w.Settings.Common.Title)
+	w.View.SetText(buf.String())
 }

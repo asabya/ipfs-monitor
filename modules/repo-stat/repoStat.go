@@ -28,43 +28,16 @@ func NewWidget(cfg *config.Config, hc *client.HttpClient,
 	if !cfg.Monitor.Widgets[WidgetName].Enabled {
 		return nil
 	}
-	rsWidget := RepoStatBlock{
-		Settings: config.Settings{
-			Common: &config.Common{
-				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
-				Bordered:         false,
-				Enabled:          false,
-				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
-				Title:            cfg.Monitor.Widgets[WidgetName].Title,
-			},
-			URL: URL,
-		},
-		Client: hc,
-		Config: cfg.Monitor.Widgets[WidgetName],
-		App:    app,
-	}
 
-	view := tview.NewTextView()
-	view.SetTitle(cfg.Monitor.Widgets[WidgetName].Title)
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
-	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
-	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetWrap(false)
-	view.SetScrollable(true)
-
-	view.SetText(rsWidget.getRepoStat())
-
-	rsWidget.View = view
+	w := widget.NewWidget(cfg, hc, app, WidgetName, URL)
+	rsWidget := RepoStatBlock(w)
+	rsWidget.Render()
 	return &rsWidget
 }
 
 func (w *RepoStatBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		w.View.Clear()
-		w.View.SetText(w.getRepoStat())
+		w.Render()
 	})
 }
 
@@ -78,24 +51,28 @@ func (w *RepoStatBlock) TextView() *tview.TextView      { return w.View }
 func (w *RepoStatBlock) CommonSettings() *config.Common { return w.Settings.Common }
 func (w *RepoStatBlock) Focusable() bool                { return true }
 
-func (w *RepoStatBlock) getRepoStat() string {
+func (w *RepoStatBlock) Render()  {
 	text := ""
+	var repoStat types.RepoStat
+	data := []byte{}
+
 	req, err := http.NewRequest("GET", w.Client.Base+w.Settings.URL, nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text
+		goto set
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-	var repoStat types.RepoStat
+	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &repoStat)
 	if err != nil {
-		fmt.Println(err.Error())
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text
+		goto set
 	}
 	text += fmt.Sprintf("Path : [green]%s[white]\n", repoStat.RepoPath)
 	text += fmt.Sprintf("Size : [green]%d[white]\n", repoStat.RepoSize)
 	text += fmt.Sprintf("StorageMax : [green]%d[white]", repoStat.StorageMax)
-	return text
+set:
+	w.View.Clear()
+	w.View.SetTitle(w.Settings.Common.Title)
+	w.View.SetText(text)
 }

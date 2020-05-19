@@ -32,45 +32,16 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	if !cfg.Monitor.Widgets[WidgetName].Enabled {
 		return nil
 	}
-	spWidget := SwarmPeersBlock{
-		Settings: config.Settings{
-			Common: &config.Common{
-				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
-				Bordered:         false,
-				Enabled:          false,
-				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
-				Title:            cfg.Monitor.Widgets[WidgetName].Title,
-			},
-			URL: URL,
-		},
-		Client: httpClient,
-		Config: cfg.Monitor.Widgets[WidgetName],
-		App:    app,
-	}
-	text, count := spWidget.getSwarmPeers()
 
-	view := tview.NewTextView()
-	view.SetTitle(fmt.Sprintf("%s ([green]%d[white])", cfg.Monitor.Widgets[WidgetName].Title, count))
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
-	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
-	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetWrap(false)
-	view.SetScrollable(true)
-	view.SetText(text)
-
-	spWidget.View = view
+	w := widget.NewWidget(cfg, httpClient, app, WidgetName, URL)
+	spWidget := SwarmPeersBlock(w)
+	spWidget.Render()
 	return &spWidget
 }
 
 func (w *SwarmPeersBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		text, count := w.getSwarmPeers()
-		w.View.Clear()
-		w.View.SetTitle(fmt.Sprintf("%s ([green]%d[white])", w.Config.Title, count))
-		w.View.SetText(text)
+		w.Render()
 	})
 }
 
@@ -84,25 +55,29 @@ func (w *SwarmPeersBlock) TextView() *tview.TextView      { return w.View }
 func (w *SwarmPeersBlock) CommonSettings() *config.Common { return w.Settings.Common }
 func (w *SwarmPeersBlock) Focusable() bool                { return true }
 
-func (w *SwarmPeersBlock) getSwarmPeers() (string, int) {
+func (w *SwarmPeersBlock) Render() {
 	text := ""
+	var swarmPeers types.SwarmPeers
+	data := []byte{}
 	req, err := http.NewRequest("GET", w.Client.Base+"swarm/peers", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s",
 			err.Error())
-		return text, 0
+		goto set
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-	var swarmPeers types.SwarmPeers
+	data, _ = ioutil.ReadAll(resp.Body)
+
 	err = json.Unmarshal(data, &swarmPeers)
 	if err != nil {
-		fmt.Println(err.Error())
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text, 0
+		goto set
 	}
 	for _, v := range swarmPeers.Peers {
 		text += fmt.Sprintf("%s/%s\n", v.Addr, v.Peer)
 	}
-	return text, len(swarmPeers.Peers)
+set:
+	w.View.Clear()
+	w.View.SetTitle(fmt.Sprintf("%s ([green]%d[white])", w.Settings.Common.Title, len(swarmPeers.Peers)))
+	w.View.SetText(text)
 }

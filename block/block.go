@@ -12,7 +12,7 @@ type Block interface {
 	Name() string
 	TextView() *tview.TextView
 	Focusable() bool
-
+	Render()
 	CommonSettings() *config.Common
 }
 
