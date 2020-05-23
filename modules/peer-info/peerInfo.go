@@ -29,36 +29,11 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	if !cfg.Monitor.Widgets[WidgetName].Enabled {
 		return nil
 	}
-	piWidget := PeerInfo{
-		Settings: config.Settings{
-			Common: &config.Common{
-				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
-				Bordered:         false,
-				Enabled:          false,
-				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
-				Title:            cfg.Monitor.Widgets[WidgetName].Title,
-			},
-			URL: URL,
-		},
-		Client: httpClient,
-		Config: cfg.Monitor.Widgets[WidgetName],
-		App:    app,
-	}
 
-	view := tview.NewTextView()
-	view.SetTitle(cfg.Monitor.Widgets[WidgetName].Title)
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
-	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
-	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetWrap(false)
-	view.SetScrollable(true)
+	w := widget.NewWidget(cfg, httpClient, app, WidgetName, URL)
+	piWidget := PeerInfo(w)
+	piWidget.Render()
 
-	view.SetText(piWidget.getPeerInfo())
-
-	piWidget.View = view
 	return &piWidget
 }
 
@@ -70,31 +45,34 @@ func (w *PeerInfo) Focusable() bool                { return true }
 
 func (w *PeerInfo) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		w.View.Clear()
-		w.View.SetText(w.getPeerInfo())
+		w.Render()
 	})
 }
 
 func (w *PeerInfo) RefreshInterval() int {
 	return w.Settings.Common.RefreshInterval
 }
-func (w *PeerInfo) getPeerInfo() string {
+
+func (w *PeerInfo) Render() {
 	text := ""
+	var identity types.Identity
+	data := []byte{}
 	req, err := http.NewRequest("GET", w.Client.Base+w.Settings.URL, nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text
+		goto set
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-
-	var identity types.Identity
+	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &identity)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text
+		goto set
 	}
 	text += fmt.Sprintf("ID : [green]%s[white]\n", identity.ID)
 	text += fmt.Sprintf("Version : [green]%s[white]", identity.ProtocolVersion)
-	return text
+set:
+	w.View.Clear()
+	w.View.SetTitle(w.Settings.Common.Title)
+	w.View.SetText(text)
 }

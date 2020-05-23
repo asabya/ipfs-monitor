@@ -28,45 +28,17 @@ func NewWidget(cfg *config.Config, httpClient *client.HttpClient,
 	if !cfg.Monitor.Widgets[WidgetName].Enabled {
 		return nil
 	}
-	bbWidget := BootstrapBlock{
-		Settings: config.Settings{
-			Common: &config.Common{
-				PositionSettings: cfg.Monitor.Widgets[WidgetName].PositionSettings,
-				Bordered:         false,
-				Enabled:          false,
-				RefreshInterval:  cfg.Monitor.Widgets[WidgetName].RefreshInterval,
-				Title:            cfg.Monitor.Widgets[WidgetName].Title,
-			},
-			URL: URL,
-		},
-		Client: httpClient,
-		Config: cfg.Monitor.Widgets[WidgetName],
-		App:    app,
-	}
-	text, count := bbWidget.getBootstrapList()
 
-	view := tview.NewTextView()
-	view.SetTitle(fmt.Sprintf("%s ([green]%d[white])", cfg.Monitor.Widgets[WidgetName].Title, count))
-	view.SetBackgroundColor(tcell.ColorNames[cfg.Monitor.Colors.Background])
-	view.SetBorder(true)
-	view.SetBorderColor(tcell.ColorNames[cfg.Monitor.Colors.Border.Normal])
-	view.SetDynamicColors(true)
-	view.SetTextColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetTitleColor(tcell.ColorNames[cfg.Monitor.Colors.Text])
-	view.SetWrap(false)
-	view.SetScrollable(true)
-	view.SetText(text)
+	w := widget.NewWidget(cfg, httpClient, app, WidgetName, URL)
+	bbWidget := BootstrapBlock(w)
+	bbWidget.Render()
 
-	bbWidget.View = view
 	return &bbWidget
 }
 
 func (w *BootstrapBlock) Refresh() {
 	w.App.QueueUpdateDraw(func() {
-		text, count := w.getBootstrapList()
-		w.View.Clear()
-		w.View.SetTitle(fmt.Sprintf("%s ([green]%d[white])", w.Config.Title, count))
-		w.View.SetText(text)
+		w.Render()
 	})
 }
 
@@ -80,24 +52,28 @@ func (w *BootstrapBlock) TextView() *tview.TextView      { return w.View }
 func (w *BootstrapBlock) CommonSettings() *config.Common { return w.Settings.Common }
 func (w *BootstrapBlock) Focusable() bool                { return true }
 
-func (w *BootstrapBlock) getBootstrapList() (string, int) {
+func (w *BootstrapBlock) Render() {
+	w.View.Clear()
 	text := ""
+	var bootstraps types.BootstrapList
+	var data = []byte{}
 	req, err := http.NewRequest("GET", w.Client.Base+"bootstrap/list", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text, 0
+		goto set
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-	var bootstraps types.BootstrapList
+	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &bootstraps)
 	if err != nil {
-		fmt.Println(err.Error())
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
-		return text, 0
+		goto set
 	}
 	for _, v := range bootstraps.Peers {
 		text += fmt.Sprintf("%s\n", v)
 	}
-	return text, len(bootstraps.Peers)
+set:
+	w.View.SetTitle(fmt.Sprintf("%s ([green]%d[white])", w.Settings.Common.Title, len(bootstraps.Peers)))
+	w.View.SetText(text)
+	return
 }
