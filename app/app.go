@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/Sab94/ipfs-monitor/modules"
-
 	"github.com/Sab94/ipfs-monitor/block"
 	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
+	"github.com/Sab94/ipfs-monitor/modules"
 	"github.com/gdamore/tcell"
 	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
@@ -109,11 +108,10 @@ func (t *TerminalMonitor) refreshAllWidgets() {
 }
 
 func (t *TerminalMonitor) scheduleWidgets() {
-	log.Debug("scheduleWidgets")
 	for _, widget := range t.Blocks {
 		schedulable, ok := widget.(block.Schedulable)
 		if ok {
-			log.Debug("scheduleWidgets : ", widget.Name(), ok)
+			log.Debugf("scheduleWidgets : %s %v", widget.Name(), ok)
 			go Schedule(schedulable)
 		}
 	}

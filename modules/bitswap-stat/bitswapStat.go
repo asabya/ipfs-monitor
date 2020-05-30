@@ -1,13 +1,10 @@
 package bitswap_stat
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	logging "github.com/ipfs/go-log"
 	"io/ioutil"
 	"net/http"
-	"text/tabwriter"
 
 	"github.com/Sab94/ipfs-monitor/block"
 	"github.com/Sab94/ipfs-monitor/client"
@@ -15,6 +12,7 @@ import (
 	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
 	"github.com/gdamore/tcell"
+	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
 )
 
@@ -56,35 +54,32 @@ func (w *BitswapStatBlock) CommonSettings() *config.Common { return w.Settings.C
 func (w *BitswapStatBlock) Focusable() bool                { return true }
 
 func (w *BitswapStatBlock) Render() {
-	wrtr := new(tabwriter.Writer)
-	var buf bytes.Buffer
-	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
+	text := ""
 	var data = []byte{}
 	var bitswapStat types.BitswapStat
 
-	req, err := http.NewRequest("GET", w.Client.Base+"bitswap/stat", nil)
+	req, err := http.NewRequest("POST", w.Client.Base+"bitswap/stat", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
-		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon, %s", err.Error())
+		text += fmt.Sprintf( "[red]Unable to connect to a running ipfs daemon, %s", err.Error())
 		goto set
 	}
 	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &bitswapStat)
 	if err != nil {
-		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon, %s", err.Error())
+		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s", err.Error())
 		goto set
 	}
 
-	fmt.Fprintf(wrtr, "%12s: [green]%d\t[white]%12s: [green]%d\t[white]%12s: [green]%d\n",
+	text += fmt.Sprintf("%12s: [green]%-7d[white]%12s: [green]%-7d[white]%12s: [green]%-7d\n",
 		"Blocks Got", bitswapStat.BlocksReceived, "Blocks Sent",
 		bitswapStat.BlocksSent, "Dup Blocks", bitswapStat.DupBlksReceived)
-	fmt.Fprintf(wrtr, 	"%12s: [green]%d\t[white]%12s: [green]%d\t[whitw]%12s: [green]%d\n",
+	text += fmt.Sprintf(	"%12s: [green]%-7d[white]%12s: [green]%-7d[whitw]%12s: [green]%-7d\n",
 		"Data Got", bitswapStat.DataReceived, "Data Sent", bitswapStat.DataSent, "Dup Dats",
 		bitswapStat.DupDataReceived)
 
 set:
-	wrtr.Flush()
 	w.View.Clear()
 	w.View.SetTitle(w.Settings.Common.Title)
-	w.View.SetText(buf.String())
+	w.View.SetText(text)
 }

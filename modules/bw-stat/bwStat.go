@@ -1,21 +1,19 @@
 package bw_stat
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"text/tabwriter"
-
-	logging "github.com/ipfs/go-log"
 
 	"github.com/Sab94/ipfs-monitor/block"
 	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
 	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell"
+	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
 )
 
@@ -58,32 +56,30 @@ func (w *BWStatBlock) CommonSettings() *config.Common { return w.Settings.Common
 func (w *BWStatBlock) Focusable() bool                { return true }
 
 func (w *BWStatBlock) Render() {
-	wrtr := new(tabwriter.Writer)
-	var buf bytes.Buffer
-	var bwStat types.BWStat
-	wrtr.Init(&buf, 6, 8, 8, '\t', 0)
+	text := ""
 	data := []byte{}
-	req, err := http.NewRequest("GET", w.Client.Base+"stats/bw", nil)
+	var bwStat types.BWStat
+
+	req, err := http.NewRequest("POST", w.Client.Base+"stats/bw", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
-		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon, %s",
+		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s",
 			err.Error())
 		goto set
 	}
 	data, _ = ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &bwStat)
 	if err != nil {
-		fmt.Fprintf(wrtr, "[red]Unable to connect to a running ipfs daemon")
+		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon")
 		goto set
 	}
 
-	fmt.Fprintf(wrtr, "%12s: [green]%.3f  [white]%12s: [green]%.3f\n",
-		"Rate In", bwStat.RateIn, "Rate Out", bwStat.RateOut)
-	fmt.Fprintf(wrtr, "%12s: [green]%d  [white]%12s: [green]%d\n",
-		"Data Got", bwStat.TotalIn, "Data Sent", bwStat.TotalOut)
+	text += fmt.Sprintf("%14s: [green]%-9s  [white]%14s: [green]%-9s\n",
+		"Rate In", humanize.Bytes(uint64(bwStat.RateIn))+"/s", "Rate Out", humanize.Bytes(uint64(bwStat.RateOut))+"/s")
+	text += fmt.Sprintf("%14s: [green]%-7s  [white]%16s: [green]%-7s\n",
+		"Data Got", humanize.Bytes(bwStat.TotalIn), "Data Sent", humanize.Bytes(bwStat.TotalOut))
 set:
-	wrtr.Flush()
 	w.View.Clear()
 	w.View.SetTitle(w.Settings.Common.Title)
-	w.View.SetText(buf.String())
+	w.View.SetText(text)
 }

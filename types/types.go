@@ -49,6 +49,6 @@ type BitswapStat struct {
 type BWStat struct {
 	RateIn   float64 `json:"RateIn"`
 	RateOut  float64 `json:"RateOut"`
-	TotalIn  int64   `json:"TotalIn"`
-	TotalOut int64   `json:"TotalOut"`
+	TotalIn  uint64   `json:"TotalIn"`
+	TotalOut uint64   `json:"TotalOut"`
 }

@@ -57,7 +57,7 @@ func (w *PeerInfo) Render() {
 	text := ""
 	var identity types.Identity
 	data := []byte{}
-	req, err := http.NewRequest("GET", w.Client.Base+w.Settings.URL, nil)
+	req, err := http.NewRequest("POST", w.Client.Base+w.Settings.URL, nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
@@ -70,7 +70,8 @@ func (w *PeerInfo) Render() {
 		goto set
 	}
 	text += fmt.Sprintf("ID : [green]%s[white]\n", identity.ID)
-	text += fmt.Sprintf("Version : [green]%s[white]", identity.ProtocolVersion)
+	text += fmt.Sprintf("[green]%s[white] | [green]%s[white]",
+		identity.AgentVersion, identity.ProtocolVersion)
 set:
 	w.View.Clear()
 	w.View.SetTitle(w.Settings.Common.Title)
