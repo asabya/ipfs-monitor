@@ -11,6 +11,7 @@ import (
 	"github.com/Sab94/ipfs-monitor/config"
 	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 )
@@ -67,9 +68,9 @@ func (w *RepoStatBlock) Render()  {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")
 		goto set
 	}
-	text += fmt.Sprintf("Path : [green]%s[white]\n", repoStat.RepoPath)
-	text += fmt.Sprintf("Size : [green]%d[white]\n", repoStat.RepoSize)
-	text += fmt.Sprintf("StorageMax : [green]%d[white]", repoStat.StorageMax)
+	text += fmt.Sprintf("%10s: [green]%s[white]\n", "Path", repoStat.RepoPath)
+	text += fmt.Sprintf("%10s: [green]%s[white]\n", "Size", humanize.Bytes(repoStat.RepoSize))
+	text += fmt.Sprintf("%10s: [green]%s[white]", "StorageMax", humanize.Bytes(repoStat.StorageMax))
 set:
 	w.View.Clear()
 	w.View.SetTitle(w.Settings.Common.Title)

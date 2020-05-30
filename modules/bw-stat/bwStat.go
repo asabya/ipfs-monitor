@@ -11,6 +11,7 @@ import (
 	"github.com/Sab94/ipfs-monitor/config"
 	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
+	"github.com/dustin/go-humanize"
 	"github.com/gdamore/tcell"
 	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
@@ -73,10 +74,10 @@ func (w *BWStatBlock) Render() {
 		goto set
 	}
 
-	text += fmt.Sprintf("%14s: [green]%-9.3f  [white]%14s: [green]%-9.3f\n",
-		"Rate In", bwStat.RateIn, "Rate Out", bwStat.RateOut)
-	text += fmt.Sprintf("%14s: [green]%-7d  [white]%16s: [green]%-7d\n",
-		"Data Got", bwStat.TotalIn, "Data Sent", bwStat.TotalOut)
+	text += fmt.Sprintf("%14s: [green]%-9s  [white]%14s: [green]%-9s\n",
+		"Rate In", humanize.Bytes(uint64(bwStat.RateIn))+"/s", "Rate Out", humanize.Bytes(uint64(bwStat.RateOut))+"/s")
+	text += fmt.Sprintf("%14s: [green]%-7s  [white]%16s: [green]%-7s\n",
+		"Data Got", humanize.Bytes(bwStat.TotalIn), "Data Sent", humanize.Bytes(bwStat.TotalOut))
 set:
 	w.View.Clear()
 	w.View.SetTitle(w.Settings.Common.Title)
