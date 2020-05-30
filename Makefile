@@ -3,12 +3,11 @@ GOBUILD := $(GOCMD) build
 BUILD_DIR := $(PWD)
 BIN_PATH := $(BUILD_DIR)/cmd
 BINARY_NAME := mipfs
-BUILD_SUPPORT := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.build-support
+BUILD_SUPPORT := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.release-support
 MAKE_ALL := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.makeall
 
-
 .release:
-	@echo "release=0.0.0" > .release
+	@echo "release=0.0.0" >> .release
 	@echo "tag=v0.0.0" >> .release
 	@echo INFO: .release created
 	@cat .release
@@ -38,7 +37,7 @@ tag: check-status
 	git add .
 	git commit -m "bumped to version $(VERSION)" ;
 	git tag $(TAG) ;
-#	@ if [ -n "$(shell git remote -v)" ] ; then git push --tags ; else echo 'no remote to push tags to' ; fi
+	@ if [ -n "$(shell git remote -v)" ] ; then git push --tags ; else echo 'no remote to push tags to' ; fi
 
 check-status:
 	@. $(BUILD_SUPPORT) ; ! hasChanges || (echo "ERROR: there are still outstanding changes" >&2 && exit 1) ;
