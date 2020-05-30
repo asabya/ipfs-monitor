@@ -22,17 +22,17 @@ tag-minor-release: .release tag
 tag-major-release: VERSION := $(shell . $(BUILD_SUPPORT); nextMajorLevel)
 tag-major-release: .release tag
 
-patch-release: tag-patch-release release
+patch-release: tag-patch-release check-release
 	@echo $(VERSION)
 
-minor-release: tag-minor-release release
+minor-release: tag-minor-release check-release
 	@echo $(VERSION)
 
-major-release: tag-major-release release
+major-release: tag-major-release check-release
 	@echo $(VERSION)
 
 tag: TAG=$(shell . $(BUILD_SUPPORT); getTag $(VERSION))
-tag: check-status check-release
+tag: check-status
 	@. $(BUILD_SUPPORT) ; ! tagExists $(TAG) || (echo "ERROR: tag $(TAG) for version $(VERSION) already tagged in git" >&2 && exit 1) ;
 	@. $(BUILD_SUPPORT) ; setRelease $(VERSION)
 	git add .
