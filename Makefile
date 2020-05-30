@@ -2,7 +2,7 @@ GOCMD := go
 GOBUILD := $(GOCMD) build
 BUILD_DIR := $(PWD)
 BIN_PATH := $(BUILD_DIR)/cmd
-BINARY_NAME := mipfs
+BINARY_NAME := ipfsmon
 BUILD_SUPPORT := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.release-support
 MAKE_ALL := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/.makeall
 
