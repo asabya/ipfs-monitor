@@ -19,7 +19,7 @@ type HttpClient struct {
 // Default is "localhost:5001"
 func NewHttpClient() fx.Option {
 	return fx.Provide(func() *HttpClient {
-		base := "localhost:5001"
+		base := "http://localhost:5001"
 		if len(os.Args) > 1 {
 			base = os.Args[1]
 		}
@@ -30,7 +30,7 @@ func NewHttpClient() fx.Option {
 				Jar:           nil,
 				Timeout:       time.Second * 10,
 			},
-			Base: "http://" + base + "/api/v0/",
+			Base: base + "/api/v0/",
 		}
 	})
 }

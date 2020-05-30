@@ -1,3 +1,4 @@
 .idea/
 ipfs-monitor*
 cmd/
+**/.DS_Store
