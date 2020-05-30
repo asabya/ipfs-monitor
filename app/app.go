@@ -108,11 +108,10 @@ func (t *TerminalMonitor) refreshAllWidgets() {
 }
 
 func (t *TerminalMonitor) scheduleWidgets() {
-	log.Debug("scheduleWidgets")
 	for _, widget := range t.Blocks {
 		schedulable, ok := widget.(block.Schedulable)
 		if ok {
-			log.Debug("scheduleWidgets : ", widget.Name(), ok)
+			log.Debugf("scheduleWidgets : %s %v", widget.Name(), ok)
 			go Schedule(schedulable)
 		}
 	}

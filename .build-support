@@ -1,0 +1,31 @@
+PLATFORMS="darwin/amd64"
+PLATFORMS="$PLATFORMS windows/amd64"
+PLATFORMS="$PLATFORMS linux/amd64"
+
+makeall(){
+	if [ $# -ne 1 ]; then
+	  echo "Usage:"
+	  echo "makeall <version>"
+	  return -1
+	fi
+	if [ -z "${BIN_PATH}" -o -z "${BINARY_NAME}" ]; then
+	  echo "BIN_PATH and BINARY_NAME needs to be set"
+	  return -1
+	fi
+	if [ ! -d ${BIN_PATH}/builds ]; then
+		mkdir ${BIN_PATH}/builds
+	fi
+	version="$1"
+	for PLATFORM in $PLATFORMS; do
+		GOOS=${PLATFORM%/*}
+		GOARCH=${PLATFORM#*/}
+		BIN_FILENAME="${BINARY_NAME}_${GOOS}_${GOARCH}_${version}"
+		if [ "${GOOS}" = "windows" ]; then
+		   BIN_FILENAME="${BIN_FILENAME}.exe";
+		fi
+		CMD="GOOS=${GOOS} GOARCH=${GOARCH} make build"
+		echo "$CMD -o ${BIN_FILENAME}"
+		eval "${CMD}"
+		mv "${BIN_PATH}/${BINARY_NAME}" "${BIN_PATH}/builds/$BIN_FILENAME"
+	done
+}
