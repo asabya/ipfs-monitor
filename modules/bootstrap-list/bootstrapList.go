@@ -6,11 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Sab94/ipfs-monitor/client"
-	"github.com/Sab94/ipfs-monitor/types"
-
 	"github.com/Sab94/ipfs-monitor/block"
+	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
+	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
@@ -57,7 +56,7 @@ func (w *BootstrapBlock) Render() {
 	text := ""
 	var bootstraps types.BootstrapList
 	var data = []byte{}
-	req, err := http.NewRequest("GET", w.Client.Base+"bootstrap/list", nil)
+	req, err := http.NewRequest("POST", w.Client.Base+"bootstrap/list", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprint("[red]Unable to connect to a running ipfs daemon")

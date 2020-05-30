@@ -6,15 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	logging "github.com/ipfs/go-log"
-
-	"github.com/Sab94/ipfs-monitor/client"
-	"github.com/Sab94/ipfs-monitor/types"
-
 	"github.com/Sab94/ipfs-monitor/block"
+	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
+	"github.com/Sab94/ipfs-monitor/types"
 	"github.com/Sab94/ipfs-monitor/widget"
 	"github.com/gdamore/tcell"
+	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
 )
 
@@ -59,7 +57,7 @@ func (w *SwarmPeersBlock) Render() {
 	text := ""
 	var swarmPeers types.SwarmPeers
 	data := []byte{}
-	req, err := http.NewRequest("GET", w.Client.Base+"swarm/peers", nil)
+	req, err := http.NewRequest("POST", w.Client.Base+"swarm/peers", nil)
 	resp, err := w.Client.Client.Do(req)
 	if err != nil {
 		text += fmt.Sprintf("[red]Unable to connect to a running ipfs daemon, %s",

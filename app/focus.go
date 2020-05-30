@@ -3,13 +3,11 @@ package app
 import (
 	"sort"
 
-	"go.uber.org/fx"
-
-	"github.com/gdamore/tcell"
-
 	"github.com/Sab94/ipfs-monitor/block"
 	"github.com/Sab94/ipfs-monitor/config"
+	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
+	"go.uber.org/fx"
 )
 
 type FocusState int

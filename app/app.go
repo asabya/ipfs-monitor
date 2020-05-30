@@ -4,11 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/Sab94/ipfs-monitor/modules"
-
 	"github.com/Sab94/ipfs-monitor/block"
 	"github.com/Sab94/ipfs-monitor/client"
 	"github.com/Sab94/ipfs-monitor/config"
+	"github.com/Sab94/ipfs-monitor/modules"
 	"github.com/gdamore/tcell"
 	logging "github.com/ipfs/go-log"
 	"github.com/rivo/tview"
