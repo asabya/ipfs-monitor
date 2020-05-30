@@ -6,9 +6,9 @@
 
 **Download the latest release**
 
-- Mac - [ipfs-monitor](link)
-- Windows - [ipfs-monitor.exe](link)
-- Linux - [ipfs-monitor](link)
+- Mac - [ipfs-monitor](https://github.com/Sab94/ipfs-monitor/releases/download/v0.1.0/mipfs_darwin_amd64_0.1.0)
+- Windows - [ipfs-monitor.exe](https://github.com/Sab94/ipfs-monitor/releases/download/v0.1.0/mipfs_windows_amd64_0.1.0.exe)
+- Linux - [ipfs-monitor](https://github.com/Sab94/ipfs-monitor/releases/download/v0.1.0/mipfs_linux_amd64_0.1.0)
 
 ![ipfs-monitor](https://user-images.githubusercontent.com/15252513/82155361-f2d5d000-9891-11ea-8dad-18ecc45d34a1.png)
 
