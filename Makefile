@@ -32,7 +32,7 @@ major-release: tag-major-release release
 	@echo $(VERSION)
 
 tag: TAG=$(shell . $(BUILD_SUPPORT); getTag $(VERSION))
-tag: check-status
+tag: check-status check-release
 	@. $(BUILD_SUPPORT) ; ! tagExists $(TAG) || (echo "ERROR: tag $(TAG) for version $(VERSION) already tagged in git" >&2 && exit 1) ;
 	@. $(BUILD_SUPPORT) ; setRelease $(VERSION)
 	git add .
