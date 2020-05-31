@@ -58,7 +58,7 @@ build:
 install: VERSION := $(shell . $(RELEASE_SUPPORT); getVersion)
 install:
 	@-echo "Installing binary..."
-	@-$(GOBUILD) -o $(GOBIN)/$(BINARY_NAME)
+	@-$(GOBUILD) -ldflags="-X 'main.CurrentVersion=$(VERSION)'" -o $(GOBIN)/$(BINARY_NAME)
 
 all: VERSION := $(shell . $(RELEASE_SUPPORT); getVersion)
 all:

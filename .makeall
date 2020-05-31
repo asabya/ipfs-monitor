@@ -25,7 +25,7 @@ makeall(){
 		if [ "${GOOS}" = "windows" ]; then
 		   BIN_FILENAME="${BIN_FILENAME}.exe";
 		fi
-		CMD="GOOS=${GOOS} GOARCH=${GOARCH} make build"
+		CMD="GOOS=${GOOS} GOARCH=${GOARCH} make build -ldflags='-X main.CurrentVersion=${version}'"
 		echo "$CMD -o ${BIN_FILENAME}"
 		eval "${CMD}"
 		mv "${BIN_PATH}/${BINARY_NAME}" "${BIN_PATH}/builds/$BIN_FILENAME"
