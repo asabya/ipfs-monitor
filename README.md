@@ -6,7 +6,7 @@
 >
 > You need the command line to be running an IPFS node (go-ipfs) to monitor different features.
 
-![ipfs-monitor](https://user-images.githubusercontent.com/15252513/82155361-f2d5d000-9891-11ea-8dad-18ecc45d34a1.png)
+![ipfs-monitor](https://user-images.githubusercontent.com/15252513/83355299-4b21cd00-a37c-11ea-8a02-8e7d7019205b.png)
 
 IPFS Monitor allows you to monitor the behavior of your IPFS Node without having to bother with different commands.
 
