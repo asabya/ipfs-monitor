@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 
@@ -9,6 +10,12 @@ import (
 )
 
 func main() {
+	verPtr := flag.Bool("version", false, "Show ipfsmon version")
+	flag.Parse()
+	if *verPtr {
+		fmt.Println(CurrentVersion)
+		return
+	}
 
 	// Bootstrap monitor app
 	monitor, err := app.Bootstrap(context.Background())
